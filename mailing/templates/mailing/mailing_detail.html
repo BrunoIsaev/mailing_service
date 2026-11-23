@@ -1,0 +1,43 @@
+{% extends 'mailing/base.html' %}
+{% block title %}Рассылка #{{ mailing.pk }}{% endblock %}
+{% block content %}
+<h1>Рассылка #{{ mailing.pk }}</h1>
+<p><strong>Статус:</strong> {{ mailing.get_status_display }}</p>
+<p><strong>Начало:</strong> {{ mailing.start_time }}</p>
+<p><strong>Окончание:</strong> {{ mailing.end_time }}</p>
+<p><strong>Сообщение:</strong> {{ mailing.message.subject }}</p>
+<p><strong>Получателей:</strong> {{ mailing.recipients.count }}</p>
+
+{% if mailing.status == 'started' %}
+<form method="post" action="{% url 'send_mailing' mailing.pk %}" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-success">Запустить рассылку</button>
+</form>
+{% endif %}
+
+<h2>История попыток</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Время</th>
+            <th>Получатель</th>
+            <th>Статус</th>
+            <th>Ответ сервера</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for attempt in attempts %}
+        <tr>
+            <td>{{ attempt.attempt_time }}</td>
+            <td>{{ attempt.client.email }}</td>
+            <td>{{ attempt.get_status_display }}</td>
+            <td>{{ attempt.server_response }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">Попыток ещё не было</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'mailing_list' %}" class="btn">Назад к списку</a>
+{% endblock %}
