@@ -8,11 +8,13 @@
 <p><strong>Сообщение:</strong> {{ mailing.message.subject }}</p>
 <p><strong>Получателей:</strong> {{ mailing.recipients.count }}</p>
 
-{% if mailing.status == 'started' %}
+{% if mailing.status == 'started' and not mailing.is_disabled %}
 <form method="post" action="{% url 'send_mailing' mailing.pk %}" style="display:inline;">
     {% csrf_token %}
     <button type="submit" class="btn btn-success">Запустить рассылку</button>
 </form>
+{% elif mailing.is_disabled %}
+<p style="color:#dc3545; font-weight:bold;">⛔ Рассылка отключена менеджером</p>
 {% endif %}
 
 <h2>История попыток</h2>

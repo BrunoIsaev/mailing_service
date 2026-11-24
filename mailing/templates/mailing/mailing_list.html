@@ -17,20 +17,24 @@
     </thead>
     <tbody>
         {% for mailing in mailings %}
-        <tr>
+        <tr {% if mailing.is_disabled %}style="background:#f8d7da;"{% endif %}>
             <td><a href="{% url 'mailing_detail' mailing.pk %}">{{ mailing.pk }}</a></td>
             <td>{{ mailing.start_time }}</td>
             <td>{{ mailing.end_time }}</td>
-            <td>{{ mailing.get_status_display }}</td>
+            <td>{{ mailing.get_status_display }}{% if mailing.is_disabled %} (отключена){% endif %}</td>
             <td>{{ mailing.message.subject }}</td>
             <td>{% if mailing.owner %}{{ mailing.owner.username }}{% else %}—{% endif %}</td>
             <td>
                 <a href="{% url 'mailing_update' mailing.pk %}" class="btn">Изменить</a>
                 {% if is_manager %}
-                <form method="post" action="{% url 'disable_mailing' mailing.pk %}" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger" onclick="return confirm('Отключить рассылку?')">Отключить</button>
-                </form>
+                    {% if mailing.is_disabled %}
+                    <span style="color:#6c757d; margin-left:5px;">Отключена</span>
+                    {% else %}
+                    <form method="post" action="{% url 'disable_mailing' mailing.pk %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Отключить рассылку?')">Отключить</button>
+                    </form>
+                    {% endif %}
                 {% endif %}
                 <form method="post" action="{% url 'mailing_delete' mailing.pk %}" style="display:inline;">
                     {% csrf_token %}
