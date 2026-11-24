@@ -1,12 +1,13 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 
 class Client(models.Model):
-    """Получатель рассылки."""
     email = models.EmailField(unique=True, verbose_name='Email')
     full_name = models.CharField(max_length=255, verbose_name='Ф.И.О.')
     comment = models.TextField(blank=True, verbose_name='Комментарий')
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='clients', verbose_name='Владелец')
 
     class Meta:
         verbose_name = 'Получатель рассылки'
@@ -17,9 +18,9 @@ class Client(models.Model):
 
 
 class Message(models.Model):
-    """Сообщение для рассылки."""
     subject = models.CharField(max_length=255, verbose_name='Тема письма')
     body = models.TextField(verbose_name='Тело письма')
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='messages', verbose_name='Владелец')
 
     class Meta:
         verbose_name = 'Сообщение'
@@ -30,7 +31,6 @@ class Message(models.Model):
 
 
 class Mailing(models.Model):
-    """Рассылка."""
     STATUS_CREATED = 'created'
     STATUS_STARTED = 'started'
     STATUS_FINISHED = 'finished'
@@ -42,21 +42,11 @@ class Mailing(models.Model):
 
     start_time = models.DateTimeField(verbose_name='Дата и время начала')
     end_time = models.DateTimeField(verbose_name='Дата и время окончания')
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default=STATUS_CREATED,
-        verbose_name='Статус'
-    )
-    message = models.ForeignKey(
-        Message,
-        on_delete=models.CASCADE,
-        verbose_name='Сообщение'
-    )
-    recipients = models.ManyToManyField(
-        Client,
-        verbose_name='Получатели'
-    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_CREATED, verbose_name='Статус')
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, verbose_name='Сообщение')
+    recipients = models.ManyToManyField(Client, verbose_name='Получатели')
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='mailings', verbose_name='Владелец')
+    is_disabled = models.BooleanField(default=False, verbose_name='Отключена менеджером')
 
     class Meta:
         verbose_name = 'Рассылка'
@@ -66,7 +56,6 @@ class Mailing(models.Model):
         return f'Рассылка {self.pk} ({self.get_status_display()})'
 
     def update_status(self):
-        """Пересчёт и сохранение статуса."""
         now = timezone.now()
         if now < self.start_time:
             new_status = self.STATUS_CREATED
@@ -74,7 +63,6 @@ class Mailing(models.Model):
             new_status = self.STATUS_FINISHED
         else:
             new_status = self.STATUS_STARTED
-
         if self.status != new_status:
             self.status = new_status
             self.save(update_fields=['status'])
@@ -82,7 +70,6 @@ class Mailing(models.Model):
 
 
 class Attempt(models.Model):
-    """Попытка отправки сообщения."""
     STATUS_SUCCESS = 'success'
     STATUS_FAILED = 'failed'
     STATUS_CHOICES = [
@@ -91,22 +78,10 @@ class Attempt(models.Model):
     ]
 
     attempt_time = models.DateTimeField(auto_now_add=True, verbose_name='Дата и время попытки')
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        verbose_name='Статус'
-    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, verbose_name='Статус')
     server_response = models.TextField(blank=True, verbose_name='Ответ почтового сервера')
-    mailing = models.ForeignKey(
-        Mailing,
-        on_delete=models.CASCADE,
-        verbose_name='Рассылка'
-    )
-    client = models.ForeignKey(
-        Client,
-        on_delete=models.CASCADE,
-        verbose_name='Получатель'
-    )
+    mailing = models.ForeignKey(Mailing, on_delete=models.CASCADE, verbose_name='Рассылка')
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, verbose_name='Получатель')
 
     class Meta:
         verbose_name = 'Попытка отправки'

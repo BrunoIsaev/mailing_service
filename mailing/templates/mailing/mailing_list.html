@@ -11,6 +11,7 @@
             <th>Окончание</th>
             <th>Статус</th>
             <th>Сообщение</th>
+            <th>Владелец</th>
             <th>Действия</th>
         </tr>
     </thead>
@@ -22,8 +23,15 @@
             <td>{{ mailing.end_time }}</td>
             <td>{{ mailing.get_status_display }}</td>
             <td>{{ mailing.message.subject }}</td>
+            <td>{% if mailing.owner %}{{ mailing.owner.username }}{% else %}—{% endif %}</td>
             <td>
                 <a href="{% url 'mailing_update' mailing.pk %}" class="btn">Изменить</a>
+                {% if is_manager %}
+                <form method="post" action="{% url 'disable_mailing' mailing.pk %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Отключить рассылку?')">Отключить</button>
+                </form>
+                {% endif %}
                 <form method="post" action="{% url 'mailing_delete' mailing.pk %}" style="display:inline;">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger" onclick="return confirm('Удалить рассылку?')">Удалить</button>
@@ -31,7 +39,7 @@
             </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6">Рассылки не найдены</td></tr>
+        <tr><td colspan="7">Рассылки не найдены</td></tr>
         {% endfor %}
     </tbody>
 </table>

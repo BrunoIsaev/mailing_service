@@ -12,7 +12,7 @@
         </tr>
     </thead>
     <tbody>
-        {% for msg in messages %}
+        {% for msg in messages_list %}
         <tr>
             <td>{{ msg.subject }}</td>
             <td>{{ msg.body|truncatechars:100 }}</td>
