@@ -26,6 +26,12 @@
             <td>{% if mailing.owner %}{{ mailing.owner.username }}{% else %}—{% endif %}</td>
             <td>
                 <a href="{% url 'mailing_update' mailing.pk %}" class="btn">Изменить</a>
+                {% if mailing.status == 'started' and not mailing.is_disabled %}
+                <form method="post" action="{% url 'send_mailing' mailing.pk %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success" onclick="return confirm('Запустить рассылку?')">Запустить</button>
+                </form>
+                {% endif %}
                 {% if is_manager %}
                     {% if mailing.is_disabled %}
                     <span style="color:#6c757d; margin-left:5px;">Отключена</span>

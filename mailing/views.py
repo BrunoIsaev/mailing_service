@@ -299,7 +299,7 @@ class UserListView(LoginRequiredMixin, View):
         if not is_manager(request.user):
             messages.error(request, 'Только менеджер может просматривать список пользователей.')
             return redirect('home')
-        users = User.objects.all()
+        users = User.objects.exclude(pk=request.user.pk)
         return render(request, 'mailing/user_list.html', {'users': users})
 
 
